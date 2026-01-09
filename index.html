@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestion des emprunts de matériel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root {
+      --bg-body: #0f172a;
+      --bg-card: rgba(15, 23, 42, 0.9);
+      --bg-card-soft: rgba(15, 23, 42, 0.94);
+      --accent: #6366f1;
+      --accent-soft: rgba(99, 102, 241, 0.14);
+      --accent-strong: #4f46e5;
+      --accent-secondary: #22c55e;
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --border-subtle: rgba(148, 163, 184, 0.4);
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.8);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: dark;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top left, #1e293b 0, #020617 45%, #020617 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(18px);
+      background: linear-gradient(120deg, rgba(15,23,42,0.94), rgba(30,64,175,0.9));
+      border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+      padding: 1rem 1.5rem 0.85rem;
+      box-shadow: 0 12px 40px rgba(15, 23, 42, 0.75);
+    }
+
+    header .header-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.3rem;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    header h1 span.logo-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 20%, #facc15 0, #f97316 40%, #db2777 100%);
+      box-shadow: 0 0 0 2px rgba(15,23,42,0.7);
+      font-size: 1.05rem;
+    }
+
+    header p {
+      margin: 0.1rem 0 0;
+      font-size: 0.9rem;
+      color: #cbd5f5;
+      opacity: 0.95;
+    }
+
+    header .header-right {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    header .header-right span.badge-env {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.6);
+      border: 1px solid rgba(148,163,184,0.55);
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 1.5rem auto 2.5rem;
+      padding: 0 1rem;
+    }
+
+    .tabs-wrapper {
+      background: linear-gradient(120deg, rgba(15,23,42,0.9), rgba(15,23,42,0.75));
+      border-radius: 999px;
+      padding: 0.35rem;
+      border: 1px solid rgba(148,163,184,0.45);
+      box-shadow: 0 14px 40px rgba(15,23,42,0.7);
+      margin-bottom: 1rem;
+      overflow: auto;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: nowrap;
+      min-width: max-content;
+    }
+
+    .tab-button {
+      border: none;
+      background: transparent;
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.18s ease-out;
+      white-space: nowrap;
+    }
+
+    .tab-button:hover {
+      background: rgba(148,163,184,0.12);
+      color: #e5e7eb;
+      transform: translateY(-1px);
+    }
+
+    .tab-button.active {
+      background: radial-gradient(circle at top left, #4f46e5 0, #2563eb 35%, #0ea5e9 100%);
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 10px 26px rgba(37,99,235,0.7);
+    }
+
+    section.tab {
+      display: none;
+      background: var(--bg-card);
+      border-radius: 1.1rem;
+      padding: 1.1rem 1.1rem 1.4rem;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(148,163,184,0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    section.tab.active { display: block; animation: fadeIn 0.2s ease-out; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 { margin-top: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.45rem; }
+
+    h2 span.subtitle-chip {
+      font-size: 0.75rem;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.96);
+      border: 1px solid rgba(148,163,184,0.5);
+      color: var(--text-muted);
+    }
+
+    h3 { margin-top: 0; font-size: 0.98rem; display: flex; align-items: center; gap: 0.3rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.25fr);
+      gap: 1.1rem;
+    }
+    @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+    .card-sub {
+      background: var(--bg-card-soft);
+      border-radius: 0.9rem;
+      padding: 0.8rem 0.9rem 0.95rem;
+      border: 1px solid rgba(148,163,184,0.45);
+      box-shadow: 0 12px 30px rgba(15,23,42,0.7);
+    }
+
+    form { display: grid; gap: 0.65rem; margin-bottom: 0.5rem; }
+
+    label { font-size: 0.8rem; font-weight: 600; color: #e5e7eb; display: flex; align-items: center; gap: 0.3rem; }
+    label span.required { color: #f97373; font-weight: 700; }
+
+    input[type="text"], input[type="date"], select, textarea {
+      width: 100%;
+      padding: 0.48rem 0.6rem;
+      border-radius: 0.55rem;
+      border: 1px solid rgba(148,163,184,0.55);
+      background: rgba(15,23,42,0.9);
+      color: var(--text-main);
+      font-size: 0.88rem;
+      outline: none;
+      transition: all 0.15s ease-out;
+    }
+
+    input[type="file"] { font-size: 0.8rem; color: var(--text-muted); }
+    textarea { resize: vertical; min-height: 70px; }
+
+    button { cursor: pointer; font-family: inherit; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+      color: #f9fafb;
+      border: none;
+      padding: 0.5rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      box-shadow: 0 12px 30px rgba(37,99,235,0.8);
+      border: 1px solid rgba(191, 219, 254, 0.7);
+      transition: all 0.18s ease-out;
+    }
+
+    .btn-secondary {
+      background: rgba(15,23,42,0.9);
+      color: var(--text-muted);
+      border-radius: 999px;
+      padding: 0.42rem 0.8rem;
+      border: 1px solid rgba(148,163,184,0.7);
+      font-size: 0.82rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.15s ease-out;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      color: #fff;
+      border-radius: 999px;
+      padding: 0.42rem 0.8rem;
+      border: 1px solid rgba(254, 202, 202, 0.9);
+      font-size: 0.82rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-left: 0.35rem;
+    }
+
+    .small { font-size: 0.78rem; color: var(--text-muted); }
+    .search-box { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.2rem; }
+    .search-box input { flex: 1; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 0.5rem;
+      border-radius: 0.8rem;
+      overflow: hidden;
+      background: rgba(15,23,42,0.94);
+      border: 1px solid rgba(148,163,184,0.4);
+    }
+
+    thead { background: linear-gradient(120deg, rgba(30,64,175,0.75), rgba(37,99,235,0.65)); }
+    th, td { padding: 0.45rem 0.55rem; text-align: left; vertical-align: top; }
+    th { font-weight: 600; color: #e5e7eb; border-bottom: 1px solid rgba(148,163,184,0.5); white-space: nowrap; }
+    tbody tr:nth-child(odd) { background: rgba(15,23,42,0.98); }
+    tbody tr:nth-child(even) { background: rgba(15,23,42,0.94); }
+
+    .material-photo {
+      width: 54px; height: 54px; object-fit: cover;
+      border-radius: 0.7rem;
+      border: 1px solid rgba(148,163,184,0.7);
+      box-shadow: 0 8px 16px rgba(15,23,42,0.7);
+    }
+
+    .badge { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.12rem 0.5rem; border-radius: 999px; font-size: 0.73rem; }
+    .badge-dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; }
+    .badge-success { background: rgba(34,197,94,0.16); color: #4ade80; border: 1px solid rgba(74,222,128,0.6); }
+    .badge-warning { background: rgba(250,204,21,0.14); color: #facc15; border: 1px solid rgba(250,204,21,0.7); }
+    .badge-danger { background: rgba(248,113,113,0.18); color: #f87171; border: 1px solid rgba(248,113,113,0.8); }
+
+    .pill { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.15rem 0.55rem; border-radius: 999px; background: rgba(99, 102, 241, 0.14); color: #c7d2fe; font-size: 0.78rem; border: 1px solid rgba(129,140,248,0.7); }
+    .pill .pill-dot { width: 6px; height: 6px; border-radius: 999px; background: #a5b4fc; }
+
+    .flex { display: flex; align-items: center; gap: 0.4rem; }
+    .flex-between { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
+
+    .suggestions { position: relative; }
+    .suggestions-list {
+      position: absolute; z-index: 10;
+      background: rgba(15,23,42,0.98);
+      border-radius: 0.6rem;
+      border: 1px solid rgba(148,163,184,0.9);
+      margin-top: 0.15rem;
+      max-height: 180px;
+      overflow-y: auto;
+      width: 100%;
+      box-shadow: 0 18px 32px rgba(15,23,42,0.9);
+    }
+    .suggestion-item {
+      padding: 0.35rem 0.55rem;
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      color: #e5e7eb;
+    }
+    .suggestion-item:hover { background: rgba(37, 99, 235, 0.35); }
+    .tagline { font-size: 0.78rem; color: var(--text-muted); }
+  </style>
+</head>
+
+<body>
+<img src="logo.png" alt="Logo établissement" id="app-logo">
+#app-logo {
+  position: fixed;
+  top: 1cm;
+  left: 1cm;
+  width: 5cm;
+  height: 5cm;
+  object-fit: contain;
+  z-index: 1000;
+}
+<header>
+  <div class="header-inner">
+    <div>
+      <h1><span class="logo-pill">📚</span>Gestion des emprunts de matériel</h1>
+      <p>Suivi façon “Bibliochouette” : matériel, personnel, prêts & retours, en un coup d’œil.</p>
+    </div>
+    <div class="header-right">
+      <span class="badge-env">
+        <span id="mode-dot" style="width:7px;height:7px;border-radius:999px;background:#facc15;"></span>
+        <span id="mode-text">Connexion…</span>
+      </span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="tabs-wrapper">
+    <div class="tabs">
+      <button class="tab-button active" data-tab="tab-materials"><span class="tab-icon">🎒</span>Matériel</button>
+      <button class="tab-button" data-tab="tab-staff"><span class="tab-icon">👩‍🏫</span>Membres du personnel</button>
+      <button class="tab-button" data-tab="tab-loans"><span class="tab-icon">🔁</span>Emprunts</button>
+      <button class="tab-button" data-tab="tab-overview"><span class="tab-icon">📊</span>Vue d’ensemble</button>
+    </div>
+  </div>
+
+  <!-- MATÉRIEL -->
+  <section id="tab-materials" class="tab active">
+    <h2>Matériel disponible <span class="subtitle-chip">Ajout à tout moment, même en cours d’année</span></h2>
+    <div class="grid">
+      <div class="card-sub">
+        <h3>➕ Ajouter / modifier du matériel</h3>
+        <form id="material-form">
+          <input type="hidden" id="material-id">
+          <div>
+            <label for="material-name">Nom du matériel <span class="required">*</span></label>
+            <input type="text" id="material-name" required placeholder="Ex. Mallette d’orthographe, jeux de fractions, ...">
+          </div>
+
+          <div>
+            <label for="material-photo-file">Photo du matériel (JPEG/PNG)</label>
+            <input type="file" id="material-photo-file" accept="image/*">
+            <img id="material-photo-preview" class="material-photo mt-1" style="display:none;" alt="Prévisualisation du matériel">
+            <p class="small">La photo est enregistrée dans la base partagée avec le matériel.</p>
+          </div>
+
+          <div>
+            <label for="material-description">Description brève</label>
+            <textarea id="material-description" placeholder="Ex. Contenu, niveau, nombre de pièces, remarques de prêt..."></textarea>
+          </div>
+
+          <div class="flex" style="flex-wrap: wrap; gap:0.5rem;">
+            <button type="submit" class="btn-primary"><span>💾</span> Enregistrer le matériel</button>
+            <button type="button" id="material-reset" class="btn-secondary">♻ Réinitialiser</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-sub">
+        <div class="flex-between">
+          <div>
+            <h3>📦 Liste du matériel</h3>
+            <p class="tagline">Tu vois directement si un matériel est disponible ou emprunté.</p>
+          </div>
+          <div style="min-width: 220px;">
+            <div class="search-box"><input type="text" id="material-search" placeholder="Filtrer par nom de matériel..."></div>
+          </div>
+        </div>
+        <table>
+          <thead>
+          <tr><th>Photo</th><th>Nom</th><th>Description</th><th>Statut</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="material-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- MEMBRES DU PERSONNEL -->
+  <section id="tab-staff" class="tab">
+    <h2>Membres du personnel <span class="subtitle-chip">Qui peut emprunter le matériel ?</span></h2>
+    <div class="grid">
+      <div class="card-sub">
+        <h3>➕ Ajouter un membre</h3>
+        <form id="staff-form">
+          <input type="hidden" id="staff-id">
+          <div>
+            <label for="staff-firstname">Prénom <span class="required">*</span></label>
+            <input type="text" id="staff-firstname" required placeholder="Ex. Marie">
+          </div>
+          <div>
+            <label for="staff-lastname">Nom <span class="required">*</span></label>
+            <input type="text" id="staff-lastname" required placeholder="Ex. Dupont">
+          </div>
+          <div class="flex" style="flex-wrap: wrap; gap:0.5rem;">
+            <button type="submit" class="btn-primary"><span>👥</span> Enregistrer le membre</button>
+            <button type="button" id="staff-reset" class="btn-secondary">♻ Réinitialiser</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-sub">
+        <div class="flex-between">
+          <div>
+            <h3>📋 Liste des membres</h3>
+            <p class="tagline">Vois qui a déjà du matériel en cours d’emprunt.</p>
+          </div>
+          <div style="min-width: 220px;">
+            <div class="search-box"><input type="text" id="staff-search" placeholder="Rechercher un membre..."></div>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Nom</th><th>Emprunts en cours</th></tr></thead>
+          <tbody id="staff-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- EMPRUNTS -->
+  <section id="tab-loans" class="tab">
+    <h2>Emprunts <span class="subtitle-chip">Nouveau prêt & suivi en temps réel</span></h2>
+    <div class="grid">
+      <div class="card-sub">
+        <h3>📝 Enregistrer un nouvel emprunt</h3>
+        <form id="loan-form">
+          <div>
+            <label>Matériel <span class="required">*</span></label>
+            <div class="suggestions">
+              <input type="text" id="loan-material-search" placeholder="Commence à taper le nom du matériel...">
+              <div id="loan-material-suggestions" class="suggestions-list" style="display:none;"></div>
+            </div>
+            <p class="small mt-1">
+              Recherche par les premières lettres (écriture prédictive).<br>
+              <span id="loan-material-selected" class="pill" style="display:none;"><span class="pill-dot"></span>Matériel sélectionné</span>
+            </p>
+            <input type="hidden" id="loan-material-id">
+          </div>
+
+          <div>
+            <label for="loan-staff">Membre du personnel <span class="required">*</span></label>
+            <select id="loan-staff" required><option value="">– Choisir –</option></select>
+          </div>
+
+          <div class="grid">
+            <div>
+              <label for="loan-start-date">Date de début <span class="required">*</span></label>
+              <input type="date" id="loan-start-date" required>
+            </div>
+            <div>
+              <label for="loan-end-date">Date de retour prévue <span class="required">*</span></label>
+              <input type="date" id="loan-end-date" required>
+              <p class="small mt-1">Par défaut : <strong>+ 7 semaines</strong>, mais tu peux adapter via le calendrier.</p>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary mt-1"><span>✅</span> Enregistrer l’emprunt</button>
+        </form>
+      </div>
+
+      <div class="card-sub">
+        <div class="flex-between">
+          <div>
+            <h3>📆 Emprunts en cours</h3>
+            <p class="tagline">Qui a quoi, pour quelle période, et s’il y a du retard.</p>
+          </div>
+          <div style="min-width: 230px;">
+            <div class="search-box"><input type="text" id="loan-search" placeholder="Filtrer par matériel ou par nom..."></div>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Matériel</th><th>Emprunté par</th><th>Période</th><th>Statut</th><th>Action</th></tr></thead>
+          <tbody id="loan-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- VUE D’ENSEMBLE -->
+  <section id="tab-overview" class="tab">
+    <h2>Vue d’ensemble du matériel <span class="subtitle-chip">Vision globale : dispo ou emprunté ?</span></h2>
+    <div class="card-sub">
+      <div class="flex-between">
+        <div class="search-box" style="flex:1;">
+          <input type="text" id="overview-search" placeholder="Rechercher un matériel précis...">
+        </div>
+        <span class="small">Affiche pour chaque matériel son statut, l’emprunteur et la date prévue de retour.</span>
+      </div>
+      <table class="mt-2">
+        <thead><tr><th>Matériel</th><th>Infos</th><th>Statut & emprunt</th></tr></thead>
+        <tbody id="overview-table-body"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script>
+  // =========================================================
+  // 1) URL APPS SCRIPT (web app .../exec)
+  // =========================================================
+  var BACKEND_URL = "https://script.google.com/macros/s/AKfycbzzYCK5M0bL3iacCSfMBqErtOMEx6xsnEACTxLRtw0bke3H73Zl0lN-dzZnZ6hEQFvTqA/exec";
+                   
+  // =========================================================
+  // 2) TRANSPORT (JSONP lire, FORM écrire, upload image)
+  // =========================================================
+  function loadRemote(type) {
+    return new Promise(function (resolve) {
+      var cbName = "jsonp_cb_" + type + "_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+
+      window[cbName] = function (data) {
+        try { resolve(Array.isArray(data) ? data : []); }
+        finally {
+          try { delete window[cbName]; } catch(_) {}
+          if (script && script.parentNode) script.parentNode.removeChild(script);
+        }
+      };
+
+      var script = document.createElement("script");
+      script.src = BACKEND_URL
+        + "?type=" + encodeURIComponent(type)
+        + "&callback=" + encodeURIComponent(cbName)
+        + "&_=" + Date.now();
+
+      script.onerror = function () {
+        try { delete window[cbName]; } catch(_) {}
+        if (script && script.parentNode) script.parentNode.removeChild(script);
+        resolve([]);
+      };
+
+      document.body.appendChild(script);
+    });
+  }
+
+  function ensureHiddenIframe() {
+    var iframe = document.getElementById("hidden_iframe_sink");
+    if (!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.name = "hidden_iframe_sink";
+      iframe.id = "hidden_iframe_sink";
+      iframe.style.display = "none";
+      document.body.appendChild(iframe);
+    }
+  }
+
+  function saveRemote(type, data) {
+    ensureHiddenIframe();
+    var payload = JSON.stringify({ type: type, data: data });
+
+    var form = document.createElement("form");
+    form.method = "POST";
+    form.action = BACKEND_URL;
+    form.target = "hidden_iframe_sink";
+
+    var input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "payload";
+    input.value = payload;
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+    form.remove();
+  }
+
+  function uploadImageToDrive(materialId, dataUrl) {
+    return new Promise(function (resolve) {
+      ensureHiddenIframe();
+
+      var token = "tok_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+
+      function onMsg(ev) {
+        var d = ev.data;
+        if (!d || d.type !== "imageUploadDone") return;
+        if (d.token !== token) return;
+        window.removeEventListener("message", onMsg);
+        resolve({ ok: !!d.ok, url: d.url || "", error: d.error || "" });
+      }
+
+      window.addEventListener("message", onMsg);
+
+      setTimeout(function () {
+        try { window.removeEventListener("message", onMsg); } catch(_) {}
+        resolve({ ok: false, url: "", error: "Timeout : aucune réponse Apps Script (30s)" });
+      }, 30000);
+
+      var form = document.createElement("form");
+      form.method = "POST";
+      form.action = BACKEND_URL;
+      form.target = "hidden_iframe_sink";
+
+      function addHidden(name, value) {
+        var i = document.createElement("input");
+        i.type = "hidden";
+        i.name = name;
+        i.value = value;
+        form.appendChild(i);
+      }
+
+      addHidden("action", "uploadImage");
+      addHidden("token", token);
+      addHidden("materialId", materialId);
+      addHidden("dataUrl", dataUrl);
+
+      document.body.appendChild(form);
+      form.submit();
+      form.remove();
+    });
+  }
+
+  // =========================================================
+  // 3) DONNÉES
+  // =========================================================
+  var materials = [];
+  var staff = [];
+  var loans = [];
+  var currentMaterialPhotoDataUrl = "";
+
+  // =========================================================
+  // 4) UTILITAIRES
+  // =========================================================
+  function generateId(prefix) {
+    return prefix + "_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+  }
+
+  function todayISO() {
+    var d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function addWeeksISO(startIso, weeks) {
+    var d = new Date(startIso);
+    if (isNaN(d.getTime())) d = new Date();
+    d.setDate(d.getDate() + weeks * 7);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function formatDateFr(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString("fr-BE");
+  }
+
+  function setMode(ok, text) {
+    var dot = document.getElementById("mode-dot");
+    var t = document.getElementById("mode-text");
+    if (dot) dot.style.background = ok ? "#22c55e" : "#f87171";
+    if (t) t.textContent = text;
+  }
+
+  // Compression douce (sans refus côté navigateur)
+  function compressImageDataUrl(inputDataUrl, maxW, quality) {
+    return new Promise(function (resolve) {
+      try {
+        var img = new Image();
+        img.onload = function () {
+          try {
+            var w = img.width;
+            var h = img.height;
+            var ratio = Math.min(1, (maxW || 1200) / w);
+            var nw = Math.max(1, Math.round(w * ratio));
+            var nh = Math.max(1, Math.round(h * ratio));
+
+            var canvas = document.createElement("canvas");
+            canvas.width = nw;
+            canvas.height = nh;
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, nw, nh);
+
+            var out = canvas.toDataURL("image/jpeg", typeof quality === "number" ? quality : 0.82);
+            resolve(out);
+          } catch (e) {
+            resolve(inputDataUrl);
+          }
+        };
+        img.onerror = function () { resolve(inputDataUrl); };
+        img.src = inputDataUrl;
+      } catch (e) {
+        resolve(inputDataUrl);
+      }
+    });
+  }
+
+  // =========================================================
+  // 5) LOGIQUE
+  // =========================================================
+  function getActiveLoanForMaterial(materialId) {
+    for (var i = 0; i < loans.length; i++) {
+      var loan = loans[i];
+      if (loan.materialId === materialId && !loan.returnedDate) return loan;
+    }
+    return null;
+  }
+
+  function countActiveLoansForStaff(staffId) {
+    var count = 0;
+    for (var i = 0; i < loans.length; i++) {
+      if (loans[i].staffId === staffId && !loans[i].returnedDate) count++;
+    }
+    return count;
+  }
+
+  function deleteMaterial(materialId) {
+    var m = materials.find(function (x) { return x.id === materialId; });
+    if (!m) return;
+
+    var activeLoan = getActiveLoanForMaterial(materialId);
+    if (activeLoan) {
+      alert("Impossible de supprimer : ce matériel est actuellement emprunté. Marque d’abord le retour.");
+      return;
+    }
+
+    var hasHistory = loans.some(function (l) { return l.materialId === materialId; });
+    var msg = hasHistory
+      ? "Ce matériel a un historique d’emprunts. Le supprimer peut rendre l’historique moins lisible.\n\nConfirmer la suppression ?"
+      : "Confirmer la suppression du matériel : " + m.name + " ?";
+
+    if (!confirm(msg)) return;
+
+    materials = materials.filter(function (x) { return x.id !== materialId; });
+    saveRemote("materials", materials);
+
+    renderMaterialTable(document.getElementById("material-search").value);
+    renderOverviewTable(document.getElementById("overview-search").value);
+    renderLoansTable(document.getElementById("loan-search").value);
+    renderStaffTable(document.getElementById("staff-search").value);
+
+    if (document.getElementById("material-id").value === materialId) resetMaterialForm();
+  }
+
+  // =========================================================
+  // 6) RENDUS
+  // =========================================================
+  function renderMaterialTable(filter) {
+    var tbody = document.getElementById("material-table-body");
+    tbody.innerHTML = "";
+    var q = (filter || "").trim().toLowerCase();
+
+    materials.forEach(function (m) {
+      if (q && m.name.toLowerCase().indexOf(q) === -1) return;
+
+      var tr = document.createElement("tr");
+
+      var tdPhoto = document.createElement("td");
+      if (m.photoUrl) {
+        var img = document.createElement("img");
+        img.src = m.photoUrl;
+        img.alt = m.name;
+        img.className = "material-photo";
+        tdPhoto.appendChild(img);
+      } else {
+        tdPhoto.innerHTML = "<span class='small'>—</span>";
+      }
+
+      var tdName = document.createElement("td");
+      tdName.textContent = m.name;
+
+      var tdDesc = document.createElement("td");
+      tdDesc.textContent = m.description || "";
+
+      var tdStatus = document.createElement("td");
+      var activeLoan = getActiveLoanForMaterial(m.id);
+
+      if (activeLoan) {
+        var borrower = staff.find(function (s) { return s.id === activeLoan.staffId; });
+        var borrowerName = borrower ? (borrower.firstName + " " + borrower.lastName) : "Inconnu";
+        var span = document.createElement("span");
+        span.className = "badge badge-warning";
+        span.innerHTML = "<span class='badge-dot'></span>Emprunté par " + borrowerName + " jusqu’au " + formatDateFr(activeLoan.endDate);
+        tdStatus.appendChild(span);
+      } else {
+        var span2 = document.createElement("span");
+        span2.className = "badge badge-success";
+        span2.innerHTML = "<span class='badge-dot'></span>Disponible";
+        tdStatus.appendChild(span2);
+      }
+
+      var tdActions = document.createElement("td");
+
+      var btnEdit = document.createElement("button");
+      btnEdit.className = "btn-secondary";
+      btnEdit.textContent = "Modifier";
+      btnEdit.addEventListener("click", function () { fillMaterialForm(m.id); });
+      tdActions.appendChild(btnEdit);
+
+      var btnDelete = document.createElement("button");
+      btnDelete.className = "btn-danger";
+      btnDelete.textContent = "Supprimer";
+      btnDelete.addEventListener("click", function () { deleteMaterial(m.id); });
+      tdActions.appendChild(btnDelete);
+
+      tr.appendChild(tdPhoto);
+      tr.appendChild(tdName);
+      tr.appendChild(tdDesc);
+      tr.appendChild(tdStatus);
+      tr.appendChild(tdActions);
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  function fillMaterialForm(id) {
+    var m = materials.find(function (x) { return x.id === id; });
+    if (!m) return;
+
+    document.getElementById("material-id").value = m.id;
+    document.getElementById("material-name").value = m.name;
+    document.getElementById("material-description").value = m.description || "";
+
+    currentMaterialPhotoDataUrl = m.photoUrl || "";
+    var preview = document.getElementById("material-photo-preview");
+    if (currentMaterialPhotoDataUrl) {
+      preview.src = currentMaterialPhotoDataUrl;
+      preview.style.display = "block";
+    } else {
+      preview.src = "";
+      preview.style.display = "none";
+    }
+    document.getElementById("material-photo-file").value = "";
+  }
+
+  function resetMaterialForm() {
+    document.getElementById("material-id").value = "";
+    document.getElementById("material-name").value = "";
+    document.getElementById("material-description").value = "";
+    document.getElementById("material-photo-file").value = "";
+    currentMaterialPhotoDataUrl = "";
+
+    var preview = document.getElementById("material-photo-preview");
+    preview.src = "";
+    preview.style.display = "none";
+  }
+
+  function renderStaffTable(filter) {
+    var tbody = document.getElementById("staff-table-body");
+    tbody.innerHTML = "";
+    var q = (filter || "").trim().toLowerCase();
+
+    staff.forEach(function (s) {
+      var fullName = s.firstName + " " + s.lastName;
+      if (q && fullName.toLowerCase().indexOf(q) === -1) return;
+
+      var tr = document.createElement("tr");
+      var tdName = document.createElement("td");
+      tdName.textContent = fullName;
+
+      var tdCount = document.createElement("td");
+      var count = countActiveLoansForStaff(s.id);
+      tdCount.textContent = count === 0 ? "Aucun emprunt en cours" : count + " emprunt(s) en cours";
+
+      tr.appendChild(tdName);
+      tr.appendChild(tdCount);
+      tbody.appendChild(tr);
+    });
+
+    var select = document.getElementById("loan-staff");
+    if (select) {
+      var currentValue = select.value;
+      select.innerHTML = '<option value="">– Choisir –</option>';
+      staff.forEach(function (s) {
+        var option = document.createElement("option");
+        option.value = s.id;
+        option.textContent = s.firstName + " " + s.lastName;
+        select.appendChild(option);
+      });
+      if (staff.find(function (s) { return s.id === currentValue; })) select.value = currentValue;
+    }
+  }
+
+  function resetStaffForm() {
+    document.getElementById("staff-id").value = "";
+    document.getElementById("staff-firstname").value = "";
+    document.getElementById("staff-lastname").value = "";
+  }
+
+  function renderLoansTable(filter) {
+    var tbody = document.getElementById("loan-table-body");
+    tbody.innerHTML = "";
+    var q = (filter || "").trim().toLowerCase();
+
+    loans.forEach(function (loan) {
+      if (loan.returnedDate) return;
+
+      var m = materials.find(function (x) { return x.id === loan.materialId; });
+      var s = staff.find(function (x) { return x.id === loan.staffId; });
+
+      var mName = m ? m.name : "Matériel supprimé";
+      var sName = s ? (s.firstName + " " + s.lastName) : "Inconnu";
+
+      var textToSearch = (mName + " " + sName).toLowerCase();
+      if (q && textToSearch.indexOf(q) === -1) return;
+
+      var tr = document.createElement("tr");
+
+      var tdMat = document.createElement("td");
+      tdMat.textContent = mName;
+
+      var tdStaff = document.createElement("td");
+      tdStaff.textContent = sName;
+
+      var tdPeriod = document.createElement("td");
+      tdPeriod.innerHTML = "Du " + formatDateFr(loan.startDate) + "<br>au " + formatDateFr(loan.endDate);
+
+      var tdStatus = document.createElement("td");
+      var end = new Date(loan.endDate);
+      var now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      if (!isNaN(end.getTime()) && end < now) {
+        var spanOver = document.createElement("span");
+        spanOver.className = "badge badge-danger";
+        spanOver.innerHTML = "<span class='badge-dot'></span>En retard";
+        tdStatus.appendChild(spanOver);
+      } else {
+        var spanOk = document.createElement("span");
+        spanOk.className = "badge badge-warning";
+        spanOk.innerHTML = "<span class='badge-dot'></span>En cours";
+        tdStatus.appendChild(spanOk);
+      }
+
+      var tdAction = document.createElement("td");
+      var btnBack = document.createElement("button");
+      btnBack.className = "btn-primary";
+      btnBack.innerHTML = "↩ Marquer comme revenu";
+      btnBack.addEventListener("click", function () { markLoanReturned(loan.id); });
+      tdAction.appendChild(btnBack);
+
+      tr.appendChild(tdMat);
+      tr.appendChild(tdStaff);
+      tr.appendChild(tdPeriod);
+      tr.appendChild(tdStatus);
+      tr.appendChild(tdAction);
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  function markLoanReturned(loanId) {
+    var changed = false;
+    loans.forEach(function (loan) {
+      if (loan.id === loanId && !loan.returnedDate) {
+        loan.returnedDate = todayISO();
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      saveRemote("loans", loans);
+      renderMaterialTable(document.getElementById("material-search").value);
+      renderLoansTable(document.getElementById("loan-search").value);
+      renderOverviewTable(document.getElementById("overview-search").value);
+      renderStaffTable(document.getElementById("staff-search").value);
+    }
+  }
+
+  function renderOverviewTable(filter) {
+    var tbody = document.getElementById("overview-table-body");
+    tbody.innerHTML = "";
+    var q = (filter || "").trim().toLowerCase();
+
+    materials.forEach(function (m) {
+      if (q && m.name.toLowerCase().indexOf(q) === -1) return;
+
+      var tr = document.createElement("tr");
+
+      var tdName = document.createElement("td");
+      tdName.textContent = m.name;
+
+      var tdInfo = document.createElement("td");
+      var desc = document.createElement("div");
+      desc.textContent = m.description || "";
+      tdInfo.appendChild(desc);
+
+      if (m.photoUrl) {
+        var img = document.createElement("img");
+        img.src = m.photoUrl;
+        img.alt = m.name;
+        img.className = "material-photo mt-1";
+        tdInfo.appendChild(img);
+      }
+
+      var tdStatus = document.createElement("td");
+      var activeLoan = getActiveLoanForMaterial(m.id);
+
+      if (!activeLoan) {
+        var sOk = document.createElement("span");
+        sOk.className = "badge badge-success";
+        sOk.innerHTML = "<span class='badge-dot'></span>Disponible";
+        tdStatus.appendChild(sOk);
+      } else {
+        var borrower = staff.find(function (s) { return s.id === activeLoan.staffId; });
+        var borrowerName = borrower ? (borrower.firstName + " " + borrower.lastName) : "Inconnu";
+
+        var status = document.createElement("div");
+        var badge = document.createElement("span");
+
+        var end = new Date(activeLoan.endDate);
+        var now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        if (!isNaN(end.getTime()) && end < now) {
+          badge.className = "badge badge-danger";
+          badge.innerHTML = "<span class='badge-dot'></span>En retard";
+        } else {
+          badge.className = "badge badge-warning";
+          badge.innerHTML = "<span class='badge-dot'></span>Emprunté";
+        }
+
+        status.appendChild(badge);
+
+        var details = document.createElement("div");
+        details.className = "small mt-1";
+        details.textContent = "Par " + borrowerName + " jusqu’au " + formatDateFr(activeLoan.endDate);
+        status.appendChild(details);
+
+        tdStatus.appendChild(status);
+      }
+
+      tr.appendChild(tdName);
+      tr.appendChild(tdInfo);
+      tr.appendChild(tdStatus);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderMaterialSuggestions(query) {
+    var list = document.getElementById("loan-material-suggestions");
+    var q = (query || "").trim().toLowerCase();
+    list.innerHTML = "";
+    if (!q) { list.style.display = "none"; return; }
+
+    var matches = materials.filter(function (m) { return m.name.toLowerCase().indexOf(q) === 0; });
+    if (matches.length === 0) { list.style.display = "none"; return; }
+
+    matches.slice(0, 10).forEach(function (m) {
+      var item = document.createElement("div");
+      item.className = "suggestion-item";
+      item.innerHTML = "<span class='left'><span>📦</span><span>" + m.name + "</span></span><span class='shortcut'>Entrée</span>";
+      item.addEventListener("click", function () { selectLoanMaterial(m); });
+      list.appendChild(item);
+    });
+
+    list.style.display = "block";
+  }
+
+  function selectLoanMaterial(material) {
+    var inputSearch = document.getElementById("loan-material-search");
+    var hiddenId = document.getElementById("loan-material-id");
+    var badge = document.getElementById("loan-material-selected");
+    var list = document.getElementById("loan-material-suggestions");
+
+    inputSearch.value = material.name;
+    hiddenId.value = material.id;
+    badge.innerHTML = "<span class='pill-dot'></span>Matériel sélectionné : " + material.name;
+    badge.style.display = "inline-flex";
+    list.style.display = "none";
+
+    if (getActiveLoanForMaterial(material.id)) {
+      alert("Attention : ce matériel est déjà emprunté et ne peut pas être prêté à nouveau tant qu’il n’est pas marqué comme revenu.");
+    }
+  }
+
+  function setupTabs() {
+    var buttons = document.querySelectorAll(".tab-button");
+    buttons.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var tabId = btn.getAttribute("data-tab");
+        document.querySelectorAll("section.tab").forEach(function (tab) {
+          tab.classList.toggle("active", tab.id === tabId);
+        });
+        buttons.forEach(function (b) { b.classList.toggle("active", b === btn); });
+      });
+    });
+  }
+
+  // =========================================================
+  // 7) INIT
+  // =========================================================
+  document.addEventListener("DOMContentLoaded", async function () {
+    setupTabs();
+
+    if (!BACKEND_URL || BACKEND_URL.indexOf("http") !== 0) {
+      setMode(false, "URL Apps Script manquante");
+      alert("Tu dois coller l’URL Apps Script (/exec) dans BACKEND_URL.");
+      return;
+    }
+
+    try {
+      materials = await loadRemote("materials");
+      staff = await loadRemote("staff");
+      loans = await loadRemote("loans");
+      setMode(true, "Mode partagé – Google Sheets");
+    } catch (e) {
+      setMode(false, "Erreur de connexion");
+      materials = []; staff = []; loans = [];
+    }
+
+    renderMaterialTable("");
+    renderStaffTable("");
+    renderLoansTable("");
+    renderOverviewTable("");
+
+    document.getElementById("material-search").addEventListener("input", function (e) { renderMaterialTable(e.target.value); });
+    document.getElementById("staff-search").addEventListener("input", function (e) { renderStaffTable(e.target.value); });
+    document.getElementById("loan-search").addEventListener("input", function (e) { renderLoansTable(e.target.value); });
+    document.getElementById("overview-search").addEventListener("input", function (e) { renderOverviewTable(e.target.value); });
+
+    // Photo matériel (UN SEUL handler, propre)
+    var materialFileInput = document.getElementById("material-photo-file");
+    var materialPreview = document.getElementById("material-photo-preview");
+
+    materialFileInput.addEventListener("change", function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      var reader = new FileReader();
+      reader.onload = async function (evt) {
+        var rawDataUrl = evt.target.result;
+        // Compression douce automatique (pas de blocage, juste pour aider Apps Script)
+        currentMaterialPhotoDataUrl = await compressImageDataUrl(rawDataUrl, 1200, 0.82);
+        materialPreview.src = currentMaterialPhotoDataUrl;
+        materialPreview.style.display = "block";
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Enregistrer matériel
+    document.getElementById("material-form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      var id = document.getElementById("material-id").value;
+      var name = document.getElementById("material-name").value.trim();
+      var desc = (document.getElementById("material-description").value || "").trim();
+
+      if (!name) { alert("Le nom du matériel est obligatoire."); return; }
+
+      // id stable
+      var matId = id || generateId("mat");
+
+      // Upload si dataUrl
+      var photoUrlFinal = "";
+      if (currentMaterialPhotoDataUrl && currentMaterialPhotoDataUrl.startsWith("data:image")) {
+        var up = await uploadImageToDrive(matId, currentMaterialPhotoDataUrl);
+
+        if (up && up.ok && up.url) {
+          photoUrlFinal = up.url;
+        } else {
+          // On n'empêche PAS l'enregistrement du matériel
+          photoUrlFinal = "";
+          alert("Image non envoyée. Le matériel sera enregistré sans photo.\nRaison : " + (up && up.error ? up.error : "aucune réponse"));
+        }
+      } else if (currentMaterialPhotoDataUrl) {
+        // déjà une URL (Drive)
+        photoUrlFinal = currentMaterialPhotoDataUrl;
+      }
+
+      // upsert
+      var existing = materials.find(function (m) { return m.id === matId; });
+      if (existing) {
+        existing.name = name;
+        existing.description = desc;
+        existing.photoUrl = photoUrlFinal || existing.photoUrl || "";
+      } else {
+        materials.push({
+          id: matId,
+          name: name,
+          photoUrl: photoUrlFinal || "",
+          description: desc
+        });
+      }
+
+      saveRemote("materials", materials);
+
+      resetMaterialForm();
+      renderMaterialTable(document.getElementById("material-search").value);
+      renderOverviewTable(document.getElementById("overview-search").value);
+    });
+
+    document.getElementById("material-reset").addEventListener("click", function () { resetMaterialForm(); });
+
+    // Enregistrer personnel
+    document.getElementById("staff-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      var id = document.getElementById("staff-id").value;
+      var first = document.getElementById("staff-firstname").value.trim();
+      var last = document.getElementById("staff-lastname").value.trim();
+
+      if (!first || !last) { alert("Prénom et nom sont obligatoires."); return; }
+
+      if (id) {
+        staff.forEach(function (s) { if (s.id === id) { s.firstName = first; s.lastName = last; } });
+      } else {
+        staff.push({ id: generateId("pers"), firstName: first, lastName: last });
+      }
+
+      saveRemote("staff", staff);
+      resetStaffForm();
+      renderStaffTable(document.getElementById("staff-search").value);
+    });
+
+    document.getElementById("staff-reset").addEventListener("click", function () { resetStaffForm(); });
+
+    // Dates emprunt
+    var startInput = document.getElementById("loan-start-date");
+    var endInput = document.getElementById("loan-end-date");
+    var today = todayISO();
+    startInput.value = today;
+    endInput.value = addWeeksISO(today, 7);
+    startInput.addEventListener("change", function () {
+      var newStart = startInput.value || todayISO();
+      endInput.value = addWeeksISO(newStart, 7);
+    });
+
+    // Suggestions matériel
+    var loanMaterialSearch = document.getElementById("loan-material-search");
+    loanMaterialSearch.addEventListener("input", function (e) {
+      document.getElementById("loan-material-id").value = "";
+      document.getElementById("loan-material-selected").style.display = "none";
+      renderMaterialSuggestions(e.target.value);
+    });
+
+    document.addEventListener("click", function (e) {
+      var list = document.getElementById("loan-material-suggestions");
+      if (!list.contains(e.target) && e.target !== loanMaterialSearch) list.style.display = "none";
+    });
+
+    // Enregistrer emprunt
+    document.getElementById("loan-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      var materialId = document.getElementById("loan-material-id").value;
+      var staffId = document.getElementById("loan-staff").value;
+      var startDate = document.getElementById("loan-start-date").value;
+      var endDate = document.getElementById("loan-end-date").value;
+
+      if (!materialId) { alert("Tu dois sélectionner un matériel dans la liste de suggestions."); return; }
+      if (!staffId) { alert("Tu dois choisir un membre du personnel."); return; }
+      if (!startDate || !endDate) { alert("Les dates de début et de fin sont obligatoires."); return; }
+
+      var material = materials.find(function (m) { return m.id === materialId; });
+      if (!material) { alert("Matériel introuvable."); return; }
+
+      if (getActiveLoanForMaterial(materialId)) {
+        alert("Ce matériel est déjà emprunté. Marque le prêt existant comme revenu avant d’enregistrer un nouveau prêt.");
+        return;
+      }
+
+      loans.push({
+        id: generateId("loan"),
+        materialId: materialId,
+        staffId: staffId,
+        startDate: startDate,
+        endDate: endDate,
+        returnedDate: ""
+      });
+
+      saveRemote("loans", loans);
+
+      renderMaterialTable(document.getElementById("material-search").value);
+      renderLoansTable(document.getElementById("loan-search").value);
+      renderOverviewTable(document.getElementById("overview-search").value);
+      renderStaffTable(document.getElementById("staff-search").value);
+
+      document.getElementById("loan-material-id").value = "";
+      document.getElementById("loan-material-search").value = "";
+      document.getElementById("loan-material-selected").style.display = "none";
+
+      alert("Emprunt enregistré pour le matériel : " + material.name);
+    });
+  });
+</script>
+
+</body>
+</html>
