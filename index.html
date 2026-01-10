@@ -379,12 +379,13 @@
             <input type="text" id="material-name" required placeholder="Ex. Mallette d’orthographe, jeux de fractions, ...">
           </div>
 
-          <div>
-            <label for="material-photo-file">Photo du matériel (JPEG/PNG)</label>
-            <input type="file" id="material-photo-file" accept="image/*">
-            <img id="material-photo-preview" class="material-photo mt-1" style="display:none;" alt="Prévisualisation du matériel">
-            <p class="small">La photo est enregistrée dans la base partagée avec le matériel.</p>
-          </div>
+       <div>
+  <label for="material-photo-url">Photo du matériel (lien Drive)</label>
+  <input type="text" id="material-photo-url" placeholder="https://drive.google.com/uc?export=view&id=...">
+  <img id="material-photo-preview" class="material-photo mt-1" style="display:none;" alt="Prévisualisation du matériel">
+  <p class="small">Colle ici le lien direct Drive (format uc?export=view&id=...).</p>
+</div>
+
 
           <div>
             <label for="material-description">Description brève</label>
@@ -1120,6 +1121,23 @@
   // 7) INIT
   // =========================================================
   document.addEventListener("DOMContentLoaded", async function () {
+    // Photo matériel via URL (Drive) -> preview
+var photoUrlInput = document.getElementById("material-photo-url");
+var materialPreview = document.getElementById("material-photo-preview");
+
+photoUrlInput.addEventListener("input", function () {
+  var url = (photoUrlInput.value || "").trim();
+  if (url) {
+    materialPreview.src = url;
+    materialPreview.style.display = "block";
+    currentMaterialPhotoDataUrl = url;
+  } else {
+    materialPreview.src = "";
+    materialPreview.style.display = "none";
+    currentMaterialPhotoDataUrl = "";
+  }
+});
+
     setupTabs();
 
     if (!BACKEND_URL || BACKEND_URL.indexOf("http") !== 0) {
@@ -1148,24 +1166,6 @@
     document.getElementById("loan-search").addEventListener("input", function (e) { renderLoansTable(e.target.value); });
     document.getElementById("overview-search").addEventListener("input", function (e) { renderOverviewTable(e.target.value); });
 
-    // Photo matériel (UN SEUL handler, propre)
-    var materialFileInput = document.getElementById("material-photo-file");
-    var materialPreview = document.getElementById("material-photo-preview");
-
-    materialFileInput.addEventListener("change", function (e) {
-      var file = e.target.files && e.target.files[0];
-      if (!file) return;
-
-      var reader = new FileReader();
-      reader.onload = async function (evt) {
-        var rawDataUrl = evt.target.result;
-        // Compression douce automatique (pas de blocage, juste pour aider Apps Script)
-        currentMaterialPhotoDataUrl = await compressImageDataUrl(rawDataUrl, 1200, 0.82);
-        materialPreview.src = currentMaterialPhotoDataUrl;
-        materialPreview.style.display = "block";
-      };
-      reader.readAsDataURL(file);
-    });
 
     // Enregistrer matériel
     document.getElementById("material-form").addEventListener("submit", async function (e) {
@@ -1180,22 +1180,9 @@
       // id stable
       var matId = id || generateId("mat");
 
-      // Upload si dataUrl
-      var photoUrlFinal = "";
-      if (currentMaterialPhotoDataUrl && currentMaterialPhotoDataUrl.startsWith("data:image")) {
-        var up = await uploadImageToDrive(matId, currentMaterialPhotoDataUrl);
+      // Photo : on ne fait plus d'upload, on prend l'URL collée
+var photoUrlFinal = (document.getElementById("material-photo-url").value || "").trim();
 
-        if (up && up.ok && up.url) {
-          photoUrlFinal = up.url;
-        } else {
-          // On n'empêche PAS l'enregistrement du matériel
-          photoUrlFinal = "";
-          alert("Image non envoyée. Le matériel sera enregistré sans photo.\nRaison : " + (up && up.error ? up.error : "aucune réponse"));
-        }
-      } else if (currentMaterialPhotoDataUrl) {
-        // déjà une URL (Drive)
-        photoUrlFinal = currentMaterialPhotoDataUrl;
-      }
 
       // upsert
       var existing = materials.find(function (m) { return m.id === matId; });
@@ -1316,6 +1303,7 @@
 
 </body>
 </html>
+
 
 
 
