@@ -469,7 +469,8 @@
           </div>
         </div>
         <table>
-          <thead><tr><th>Nom</th><th>Emprunts en cours</th></tr></thead>
+          <!-- ✅ AJOUT COLONNE Actions -->
+          <thead><tr><th>Nom</th><th>Emprunts en cours</th><th>Actions</th></tr></thead>
           <tbody id="staff-table-body"></tbody>
         </table>
       </div>
@@ -729,6 +730,30 @@
     if (document.getElementById("material-id").value === materialId) resetMaterialForm();
   }
 
+  /* ✅ AJOUT : suppression d’un membre du personnel */
+  function deleteStaff(staffId) {
+    var s = staff.find(function (x) { return x.id === staffId; });
+    if (!s) return;
+
+    var hasActiveLoan = loans.some(function (l) { return l.staffId === staffId && !l.returnedDate; });
+    if (hasActiveLoan) {
+      alert("Impossible de supprimer : ce membre a un emprunt en cours. Marque d’abord le retour.");
+      return;
+    }
+
+    var fullName = (s.firstName || "") + " " + (s.lastName || "");
+    if (!confirm("Confirmer la suppression de : " + fullName.trim() + " ?")) return;
+
+    staff = staff.filter(function (x) { return x.id !== staffId; });
+    saveRemote("staff", staff);
+
+    renderStaffTable(document.getElementById("staff-search").value);
+    renderLoansTable(document.getElementById("loan-search").value);
+    renderOverviewTable(document.getElementById("overview-search").value);
+
+    if (document.getElementById("staff-id").value === staffId) resetStaffForm();
+  }
+
   // =========================================================
   // 6) RENDUS
   // =========================================================
@@ -810,7 +835,6 @@
     document.getElementById("material-name").value = m.name;
     document.getElementById("material-description").value = m.description || "";
 
-    // ✅ remet l’URL dans le champ
     document.getElementById("material-photo-url").value = m.photoUrl || "";
 
     currentMaterialPhotoDataUrl = m.photoUrl || "";
@@ -846,6 +870,7 @@
       if (q && fullName.toLowerCase().indexOf(q) === -1) return;
 
       var tr = document.createElement("tr");
+
       var tdName = document.createElement("td");
       tdName.textContent = fullName;
 
@@ -853,8 +878,18 @@
       var count = countActiveLoansForStaff(s.id);
       tdCount.textContent = count === 0 ? "Aucun emprunt en cours" : count + " emprunt(s) en cours";
 
+      /* ✅ AJOUT : bouton supprimer */
+      var tdActions = document.createElement("td");
+      var btnDelete = document.createElement("button");
+      btnDelete.className = "btn-danger";
+      btnDelete.textContent = "Supprimer";
+      btnDelete.addEventListener("click", function () { deleteStaff(s.id); });
+      tdActions.appendChild(btnDelete);
+
       tr.appendChild(tdName);
       tr.appendChild(tdCount);
+      tr.appendChild(tdActions);
+
       tbody.appendChild(tr);
     });
 
